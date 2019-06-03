@@ -7,9 +7,13 @@
 //
 
 import UIKit
-class ViewController: UIViewController {
+class ViewController: UIViewController, UITableViewDelegate, UISearchResultsUpdating {
+    
     var actors: [Actor] = []
+    var filteredActors = [Actor]()
     let group = DispatchGroup()
+    
+    let searchController = UISearchController(searchResultsController: nil)
     
     enum JSONError: String, Error {
         case NoData = "ERROR: no data"
@@ -95,16 +99,22 @@ class ViewController: UIViewController {
         //append cells after group job gets done
         group.notify(queue: .main) {
             self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "UITableViewCell")
-            
             self.tableView.dataSource = self
+            
+            self.filteredActors = self.actors
+            self.searchController.searchResultsUpdater = self
+            self.searchController.dimsBackgroundDuringPresentation = false
+            self.definesPresentationContext = true
+            self.tableView.tableHeaderView = self.searchController.searchBar
         }
+        
         
     }
 }
 extension ViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.actors.count
+        return self.filteredActors.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -113,7 +123,7 @@ extension ViewController: UITableViewDataSource {
         cell = UITableViewCell(style: UITableViewCell.CellStyle.value1,
                                reuseIdentifier: "UITableViewCell")
         
-        let actor = self.actors[indexPath.item] //get actor object for each cell
+        let actor = self.filteredActors[indexPath.item] //get actor object for each cell
         cell.textLabel?.text = actor.name //set actor name
         
         //prepare image url for actor
@@ -127,6 +137,19 @@ extension ViewController: UITableViewDataSource {
         cell.detailTextLabel?.text = String(actor.popularity)
         
         return cell
+    }
+    
+    func updateSearchResults(for searchController: UISearchController) {
+        if let searchText = searchController.searchBar.text, !searchText.isEmpty {
+            print("searchText:"+searchText)
+            filteredActors = actors.filter { selectedActor in
+                return selectedActor.name.lowercased().contains(searchText.lowercased())
+            }
+            
+        } else {
+            filteredActors = actors
+        }
+        tableView.reloadData()
     }
 }
 

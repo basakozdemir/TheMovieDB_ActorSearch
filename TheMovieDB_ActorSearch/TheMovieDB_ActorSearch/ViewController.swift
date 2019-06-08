@@ -13,7 +13,7 @@ class ViewController: UIViewController, UITableViewDelegate, UISearchResultsUpda
     var filteredActors = [Actor]()
     let group = DispatchGroup()
     
-    let searchController = UISearchController(searchResultsController: nil)
+    var searchController = UISearchController(searchResultsController: nil)
     
     enum JSONError: String, Error {
         case NoData = "ERROR: no data"
@@ -102,6 +102,7 @@ class ViewController: UIViewController, UITableViewDelegate, UISearchResultsUpda
             self.tableView.dataSource = self
             
             self.filteredActors = self.actors
+            self.searchController.searchBar.searchBarStyle = UISearchBar.Style.minimal
             self.searchController.searchResultsUpdater = self
             self.searchController.dimsBackgroundDuringPresentation = false
             self.definesPresentationContext = true
@@ -142,13 +143,16 @@ extension ViewController: UITableViewDataSource {
     func updateSearchResults(for searchController: UISearchController) {
         if let searchText = searchController.searchBar.text, !searchText.isEmpty {
             print("searchText:"+searchText)
+            print("count:", self.filteredActors.count)
             filteredActors = actors.filter { selectedActor in
-                return selectedActor.name.lowercased().contains(searchText.lowercased())
+                return selectedActor.name.split(separator: " ")[0].lowercased().starts(with: searchText.lowercased()) //search by the first name
+                //return selectedActor.name.split(separator: " ")[0].lowercased().contains(searchText.lowercased())
             }
             
         } else {
             filteredActors = actors
         }
+        searchController.searchBar.prompt = String(self.filteredActors.count)
         tableView.reloadData()
     }
 }
